@@ -1,16 +1,21 @@
 package com.boroMediaLLP.boromedia.config;
 
+import com.boroMediaLLP.boromedia.entity.Users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.DefaultSecurityFilterChain;
@@ -56,6 +61,31 @@ public class SecurityConfig {
         provider.setUserDetailsService(this.customUserDetailService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
+    }
+
+    //admin role
+    @Bean
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeRequests(authorizeRequests ->
+                        authorizeRequests
+                                .antMatchers("/admin").hasRole("ADMIN")
+                                .anyRequest().authenticated()
+                )
+                .formLogin(Customizer.withDefaults());
+
+        return http.build();
+    }
+
+    @Bean
+    public UserDetails user() {
+        PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        UserDetails user = User.builder()
+                .username("admin")
+                .password(passwordEncoder.encode("password"))
+                .roles("ADMIN")
+                .build();
+        return user;
     }
 
     @Bean
